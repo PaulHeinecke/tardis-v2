@@ -3,7 +3,7 @@
 <head>  
   <meta charset="UTF-8">  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">  
-  <title>TARDIS Quest Tracker (Einfach)</title>  
+  <title>TARDIS Quest Tracker</title>  
   <script src="https://cdn.tailwindcss.com"></script>  
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>  
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>  
@@ -13,16 +13,545 @@
   <div id="root"></div>  
   
   <script type="text/babel">  
-    // Minimale Datenmodelle  
+    // ========== DATENMODELLE ==========  
     const milestones = [  
       { id: 1, name: "Gallifrey", points: 400, reached: false, icon: "🌌", description: "Die Heimatwelt der Time Lords" },  
-      { id: 2, name: "Prag", points: 1500, reached: false, icon: "🏙️", description: "Die ultimative Reise" },  
+      { id: 2, name: "Neverwinter", points: 600, reached: false, icon: "🏰", description: "Die berühmte Stadt aus D&D" },  
+      { id: 3, name: "Winterfell", points: 800, reached: false, icon: "❄️", description: "Die ikonische Festung aus Game of Thrones" },  
+      { id: 4, name: "Hogsmeade", points: 1000, reached: false, icon: "✨", description: "Das magische Dorf aus Harry Potter" },  
+      { id: 5, name: "Prag", points: 1500, reached: false, icon: "🏙️", description: "Die ultimative Reise" },  
     ];  
 
-    // Hauptanwendung  
+    // Elefanten-Sets  
+    const elephantSets = [  
+      {  
+        id: "safari",  
+        name: "Safari Abenteuer",  
+        description: "Elefanten aus der afrikanischen Savanne",  
+        elephantIds: [1, 7, 12, 18, 24],  
+        bonusPoints: 50,  
+        completed: false,  
+        icon: "🌍"  
+      },  
+      {  
+        id: "jungle",  
+        name: "Dschungel-Erkunder",  
+        description: "Elefanten aus den tropischen Regenwäldern",  
+        elephantIds: [2, 8, 15, 22, 29],  
+        bonusPoints: 50,  
+        completed: false,  
+        icon: "🌴"  
+      },  
+      {  
+        id: "fantasy",  
+        name: "Mystische Wesen",  
+        description: "Elefanten aus Fantasiewelten",  
+        elephantIds: [3, 11, 33, 44, 51],  
+        bonusPoints: 50,  
+        completed: false,  
+        icon: "✨"  
+      }  
+    ];  
+
+    // Elefanten (verkürzte Liste)  
+    const elephants = [  
+      // Safari Set  
+      {  
+        id: 1,  
+        name: "Grauer Weiser",  
+        difficulty: "easy",  
+        rarity: "common",  
+        basePoints: 10,  
+        bonusPoints: 0,  
+        setId: "safari",  
+        collected: true,  
+        dateCollected: "2025-03-15",  
+        imageUrl: "https://via.placeholder.com/180",  
+        cardUnlocked: true  
+      },  
+      {  
+        id: 7,  
+        name: "Wüstenwanderer",  
+        difficulty: "easy",  
+        rarity: "rare",  
+        basePoints: 10,  
+        bonusPoints: 10,  
+        setId: "safari",  
+        collected: true,  
+        dateCollected: "2025-03-18",  
+        imageUrl: "https://via.placeholder.com/180",  
+        cardUnlocked: true  
+      },  
+      {  
+        id: 12,  
+        name: "Savannen-König",  
+        difficulty: "medium",  
+        rarity: "legendary",  
+        basePoints: 20,  
+        bonusPoints: 25,  
+        setId: "safari",  
+        collected: false,  
+        imageUrl: "https://via.placeholder.com/180",  
+        cardUnlocked: false  
+      },  
+      
+      // Jungle Set  
+      {  
+        id: 2,  
+        name: "Elfenbeinhüter",  
+        difficulty: "easy",  
+        rarity: "common",  
+        basePoints: 10,  
+        bonusPoints: 0,  
+        setId: "jungle",  
+        collected: true,  
+        dateCollected: "2025-03-20",  
+        imageUrl: "https://via.placeholder.com/180",  
+        cardUnlocked: true  
+      },  
+      
+      // Fantasy Set  
+      {  
+        id: 3,  
+        name: "Nebelwandler",  
+        difficulty: "medium",  
+        rarity: "rare",  
+        basePoints: 20,  
+        bonusPoints: 10,  
+        setId: "fantasy",  
+        collected: true,  
+        dateCollected: "2025-03-25",  
+        imageUrl: "https://via.placeholder.com/180",  
+        cardUnlocked: true  
+      }  
+    ];  
+
+    // Belohnungskategorien  
+    const rewardCategories = [  
+      {  
+        id: "small",  
+        name: "Kleine Belohnungen",  
+        description: "Verbrauchen 25-100 Punkte",  
+        rewards: [  
+          { id: 1, name: "Long Rest", description: "Eine Stunde ungestörte Gaming-Zeit", points: 25, icon: "🎮" },  
+          { id: 2, name: "Bardic Inspiration", description: "Du bringst ihm einen Snack und Getränk während er spielt/liest", points: 25, icon: "🥤" }  
+        ]  
+      },  
+      {  
+        id: "medium",  
+        name: "Mittlere Belohnungen",  
+        description: "Verbrauchen 150-300 Punkte",  
+        rewards: [  
+          { id: 17, name: "Adventuring Party", description: "Spieleabend mit Freunden (du organisierst alles)", points: 150, icon: "👥" }  
+        ]  
+      }  
+    ];  
+
+    // ========== KOMPONENTEN ==========  
+
+    // Header-Komponente  
+    function Header({ showSettings, setShowSettings }) {  
+      return (  
+        <header className="bg-blue-800 p-4 border-b-4 border-yellow-400 relative overflow-hidden">  
+          <div className="flex justify-between items-center relative z-10">  
+            <div className="flex items-center">  
+              <div className="w-12 h-16 bg-blue-600 relative mr-3 border border-white rounded-sm">  
+                <div className="absolute top-0 w-full text-center text-xs bg-white text-blue-800 font-bold">POLICE</div>  
+                <div className="absolute bottom-0 w-full text-center text-xs bg-white text-blue-800 font-bold">BOX</div>  
+                <div className="grid grid-cols-2 gap-1 p-1 absolute top-4 left-0 right-0">  
+                  {[...Array(6)].map((_, i) => (  
+                    <div key={i} className="w-full h-2 bg-white" />  
+                  ))}  
+                </div>  
+              </div>  
+              <h1 className="text-2xl font-bold">TARDIS Quest Tracker</h1>  
+            </div>  
+            <button   
+              onClick={() => setShowSettings(!showSettings)}   
+              className="p-2 bg-blue-700 rounded-full hover:bg-blue-600 transition-colors"  
+            >  
+              ⚙️  
+            </button>  
+          </div>  
+        </header>  
+      );  
+    }  
+
+    // Einstellungsbereich  
+    function SettingsPanel({ addPoints, resetPoints }) {  
+      return (  
+        <div className="bg-blue-900 p-4 border-b border-blue-700 flex justify-between items-center">  
+          <div className="flex gap-4">  
+            <button   
+              onClick={() => addPoints(25)}   
+              className="px-3 py-1 bg-green-600 hover:bg-green-500 rounded text-sm"  
+            >  
+              +25 Punkte  
+            </button>  
+            <button   
+              onClick={() => addPoints(50)}   
+              className="px-3 py-1 bg-green-600 hover:bg-green-500 rounded text-sm"  
+            >  
+              +50 Punkte  
+            </button>  
+            <button   
+              onClick={() => addPoints(100)}   
+              className="px-3 py-1 bg-green-600 hover:bg-green-500 rounded text-sm"  
+            >  
+              +100 Punkte  
+            </button>  
+          </div>  
+          <button   
+            onClick={resetPoints}   
+            className="px-3 py-1 bg-red-600 hover:bg-red-500 rounded text-sm flex items-center gap-1"  
+          >  
+            🔄 Reset  
+          </button>  
+        </div>  
+      );  
+    }  
+
+    // Character Sheet  
+    function CharacterSheet({ totalPoints, availablePoints }) {  
+      return (  
+        <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-lg p-5 shadow-lg mb-8 border border-blue-700">  
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">  
+            <div className="text-center md:text-left">  
+              <h2 className="text-xl font-bold mb-1">Abenteurer-Pass</h2>  
+              <p className="text-blue-300 text-sm">Deine Reise durch Raum und Zeit</p>  
+            </div>  
+            <div className="flex gap-6">  
+              <div className="text-center">  
+                <p className="text-sm text-blue-300">Gesamtpunkte</p>  
+                <p className="text-3xl font-bold text-yellow-400">{totalPoints}</p>  
+              </div>  
+              <div className="text-center">  
+                <p className="text-sm text-blue-300">Verfügbare Punkte</p>  
+                <p className="text-3xl font-bold text-green-400">{availablePoints}</p>  
+              </div>  
+            </div>  
+          </div>  
+        </div>  
+      );  
+    }  
+
+    // Haupt-Navigationstabs  
+    function NavigationTabs({ activeTab, setActiveTab }) {  
+      return (  
+        <div className="flex mb-6 border-b border-blue-800">  
+          <button   
+            className={`px-4 py-2 flex items-center gap-2 ${activeTab === 'progress' ? 'bg-blue-800 text-white rounded-t-lg border-b-2 border-yellow-400' : 'text-blue-300 hover:text-white'}`}  
+            onClick={() => setActiveTab('progress')}  
+          >  
+            ⭐ Fortschritt  
+          </button>  
+          <button   
+            className={`px-4 py-2 flex items-center gap-2 ${activeTab === 'rewards' ? 'bg-blue-800 text-white rounded-t-lg border-b-2 border-yellow-400' : 'text-blue-300 hover:text-white'}`}  
+            onClick={() => setActiveTab('rewards')}  
+          >  
+            📖 Spellbook of Rewards  
+          </button>  
+          <button   
+            className={`px-4 py-2 flex items-center gap-2 ${activeTab === 'elephants' ? 'bg-blue-800 text-white rounded-t-lg border-b-2 border-yellow-400' : 'text-blue-300 hover:text-white'}`}  
+            onClick={() => setActiveTab('elephants')}  
+          >  
+            🐘 Elefantensammlung  
+          </button>  
+        </div>  
+      );  
+    }  
+
+    // Fortschritts-Tab  
+    function ProgressTab({ totalPoints, userMilestones }) {  
+      // Nächsten nicht erreichten Meilenstein finden  
+      const nextMilestone = userMilestones.find(m => !m.reached);  
+
+      return (  
+        <div className="mb-8">  
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">  
+            ✨ Deine TARDIS-Reise  
+          </h2>  
+          
+          {/* Journey Path */}  
+          <div className="relative mt-12 mb-16">  
+            {/* Path Line */}  
+            <div className="absolute top-14 left-0 right-0 h-2 bg-blue-800 rounded-full z-0">  
+              <div   
+                className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-1000 ease-out"  
+                style={{ width: `${Math.min(100, (totalPoints / 1500) * 100)}%` }}  
+              />  
+            </div>  
+            
+            {/* Milestones */}  
+            <div className="flex justify-between relative z-10">  
+              {userMilestones.map((milestone, index) => (  
+                <div key={milestone.id} className="flex flex-col items-center" style={{ width: `${100 / userMilestones.length}%` }}>  
+                  <div   
+                    className={`w-16 h-16 flex items-center justify-center text-2xl rounded-full mb-2 transition-all ${  
+                      milestone.reached   
+                        ? 'bg-gradient-to-r from-yellow-500 to-yellow-300 text-blue-900 border-4 border-white shadow-lg'   
+                        : 'bg-blue-800 text-blue-400 border border-blue-700'  
+                    }`}  
+                  >  
+                    {milestone.icon}  
+                  </div>  
+                  <div className={`text-sm font-bold ${milestone.reached ? 'text-yellow-300' : 'text-blue-300'}`}>  
+                    {milestone.name}  
+                  </div>  
+                  <div className="text-xs mt-1">{milestone.points} Punkte</div>  
+                  
+                  {milestone.reached && (  
+                    <div className="mt-1 bg-blue-800 px-2 py-1 rounded-full text-xs text-yellow-300 flex items-center">  
+                      🏆 Erreicht!  
+                    </div>  
+                  )}  
+                </div>  
+              ))}  
+            </div>  
+          </div>  
+          
+          {/* Next Milestone */}  
+          {totalPoints < 1500 && (  
+            <div className="bg-blue-900 rounded-lg p-4 border border-blue-700 mb-8">  
+              <h3 className="text-lg font-bold mb-2">Nächstes Ziel:</h3>  
+              {nextMilestone ? (  
+                <div className="flex items-center gap-4">  
+                  <div className="w-12 h-12 flex items-center justify-center text-xl bg-blue-800 rounded-full">  
+                    {nextMilestone.icon}  
+                  </div>  
+                  <div>  
+                    <p className="font-bold">{nextMilestone.name}</p>  
+                    <p className="text-sm text-blue-300">{nextMilestone.description}</p>  
+                    <p className="text-xs mt-1">  
+                      Noch {nextMilestone.points - totalPoints} Punkte bis zum Erreichen!  
+                    </p>  
+                  </div>  
+                </div>  
+              ) : (  
+                <p>Alle Meilensteine erreicht! Glückwunsch!</p>  
+              )}  
+            </div>  
+          )}  
+          
+          {/* Reached Milestones */}  
+          {userMilestones.some(m => m.reached) && (  
+            <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">  
+              <h3 className="text-lg font-bold mb-2">Erreichte Meilensteine:</h3>  
+              <div className="space-y-3">  
+                {userMilestones.filter(m => m.reached).map(milestone => (  
+                  <div key={milestone.id} className="flex items-center gap-4 bg-blue-800 p-2 rounded-lg">  
+                    <div className="w-10 h-10 flex items-center justify-center text-lg bg-gradient-to-r from-yellow-500 to-yellow-300 text-blue-900 rounded-full">  
+                      {milestone.icon}  
+                    </div>  
+                    <div>  
+                      <p className="font-bold">{milestone.name}</p>  
+                      <p className="text-xs text-blue-300">{milestone.points} Punkte • {milestone.description}</p>  
+                    </div>  
+                  </div>  
+                ))}  
+              </div>  
+            </div>  
+          )}  
+        </div>  
+      );  
+    }  
+
+    // Belohnungsbuch  
+    function RewardBook({ availablePoints, showCategory, setShowCategory, rewardCategories }) {  
+      return (  
+        <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-lg border border-blue-700 overflow-hidden">  
+          {/* Spellbook Cover */}  
+          <div className="bg-gradient-to-r from-indigo-800 to-purple-900 p-4 border-b border-blue-700">  
+            <div className="flex justify-between items-center">  
+              <div>  
+                <h3 className="text-lg font-bold">Verfügbare Punkte: {availablePoints}</h3>  
+                <p className="text-sm text-blue-300">Wähle eine Kategorie, um Belohnungen anzuzeigen</p>  
+              </div>  
+              <div className="bg-yellow-400 text-blue-900 rounded-full px-3 py-1 text-sm font-bold flex items-center">  
+                🎁 Belohnungen einlösen  
+              </div>  
+            </div>  
+          </div>  
+          
+          {/* Reward Categories */}  
+          <div className="divide-y divide-blue-800">  
+            {rewardCategories.map(category => (  
+              <div key={category.id} className="overflow-hidden">  
+                {/* Category Header */}  
+                <button   
+                  className="w-full p-4 text-left flex justify-between items-center hover:bg-blue-800/30"  
+                  onClick={() => setShowCategory(showCategory === category.id ? null : category.id)}  
+                >  
+                  <div>  
+                    <h4 className="font-bold">{category.name}</h4>  
+                    <p className="text-sm text-blue-300">{category.description}</p>  
+                  </div>  
+                  {showCategory === category.id ? "▲" : "▼"}  
+                </button>  
+                
+                {/* Rewards List */}  
+                {showCategory === category.id && (  
+                  <div className="bg-blue-950/50 p-4 grid grid-cols-1 md:grid-cols-2 gap-3">  
+                    {category.rewards.map(reward => (  
+                      <div   
+                        key={reward.id}   
+                        className={`p-3 rounded-lg border flex items-center gap-3 ${  
+                          category.id !== "milestone" && availablePoints >= reward.points   
+                            ? 'bg-blue-800/50 border-blue-700 hover:bg-blue-800 cursor-pointer'   
+                            : 'bg-blue-900/30 border-blue-800 opacity-70'  
+                        }`}  
+                      >  
+                        <div className={`w-10 h-10 flex items-center justify-center rounded-full text-lg ${  
+                          category.id !== "milestone" && availablePoints >= reward.points   
+                            ? 'bg-gradient-to-r from-yellow-500 to-yellow-300 text-blue-900'   
+                            : 'bg-blue-800 text-blue-300'  
+                        }`}>  
+                          {reward.icon}  
+                        </div>  
+                        <div className="flex-1">  
+                          <div className="flex justify-between">  
+                            <h5 className="font-bold">{reward.name}</h5>  
+                            <span className={`text-sm font-bold ${  
+                              category.id !== "milestone" && availablePoints >= reward.points   
+                                ? 'text-green-400'   
+                                : 'text-blue-400'  
+                            }`}>  
+                              {reward.points} Punkte  
+                            </span>  
+                          </div>  
+                          <p className="text-xs text-blue-300">{reward.description}</p>  
+                        </div>  
+                      </div>  
+                    ))}  
+                  </div>  
+                )}  
+              </div>  
+            ))}  
+          </div>  
+        </div>  
+      );  
+    }  
+
+    // Belohnungen-Tab  
+    function RewardsTab({ availablePoints, showRewardCategory, setShowRewardCategory, rewardCategories }) {  
+      return (  
+        <div>  
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">  
+            📖 Spellbook of Rewards  
+          </h2>  
+          
+          <RewardBook   
+            availablePoints={availablePoints}   
+            showCategory={showRewardCategory}  
+            setShowCategory={setShowRewardCategory}  
+            rewardCategories={rewardCategories}  
+          />  
+        </div>  
+      );  
+    }  
+
+    // Vereinfachte Elefantensammlung  
+    function ElephantCollection({ elephants, elephantSets }) {  
+      return (  
+        <div>  
+          <h2 className="text-xl font-bold mb-4">🐘 Deine Elefantensammlung</h2>  
+          
+          <div className="bg-blue-900/40 rounded-lg border border-blue-800 p-4 mb-6">  
+            <div className="text-center mb-4">  
+              <div className="text-lg">Du hast {elephants.filter(e => e.collected).length} von {elephants.length} Elefanten gefunden</div>  
+              <div className="w-full h-4 bg-blue-950 rounded-full mt-2 overflow-hidden">  
+                <div   
+                  className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"  
+                  style={{ width: `${(elephants.filter(e => e.collected).length / elephants.length) * 100}%` }}  
+                />  
+              </div>  
+            </div>  
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">  
+              {elephants.map(elephant => (  
+                <div   
+                  key={elephant.id}  
+                  className={`bg-blue-900/60 border ${  
+                    elephant.collected   
+                      ? elephant.rarity === 'legendary'   
+                        ? 'border-yellow-400'   
+                        : elephant.rarity === 'rare'   
+                          ? 'border-cyan-400'   
+                          : 'border-blue-700'  
+                      : 'border-blue-800 opacity-70'  
+                  } rounded-lg overflow-hidden`}  
+                >  
+                  <div className="relative aspect-square">  
+                    <img   
+                      src={elephant.imageUrl}   
+                      alt={elephant.name}  
+                      className={`w-full h-full object-cover ${!elephant.collected && 'grayscale'}`}   
+                    />  
+                    
+                    {elephant.collected && elephant.rarity === 'legendary' && (  
+                      <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/30 to-transparent" />  
+                    )}  
+                    
+                    <div className="absolute top-2 left-2 bg-blue-900/80 text-white px-2 py-1 rounded-md text-xs font-bold">  
+                      #{elephant.id}  
+                    </div>  
+                    
+                    {elephant.collected && (  
+                      <div className="absolute top-2 right-2 bg-green-600/80 text-white p-1 rounded-full">  
+                        ✓  
+                      </div>  
+                    )}  
+                  </div>  
+                  
+                  <div className="p-3">  
+                    <h3 className="font-bold truncate">{elephant.name}</h3>  
+                    <div className="flex justify-between items-center mt-1">  
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${  
+                        elephant.difficulty === 'easy'   
+                          ? 'bg-green-700/40 text-green-200'   
+                          : elephant.difficulty === 'medium'   
+                            ? 'bg-yellow-700/40 text-yellow-200'   
+                            : 'bg-red-700/40 text-red-200'  
+                      }`}>  
+                        {  
+                          elephant.difficulty === 'easy' ? 'Leicht' :   
+                          elephant.difficulty === 'medium' ? 'Mittel' : 'Schwer'  
+                        }  
+                      </span>  
+                      
+                      <span className="text-sm font-bold">  
+                        {elephant.basePoints + elephant.bonusPoints} Pkt.  
+                      </span>  
+                    </div>  
+                    
+                    <div className="flex items-center mt-2 text-xs text-blue-300">  
+                      <span className="mr-1">{elephantSets.find(set => set.id === elephant.setId)?.icon}</span>  
+                      <span className="truncate">{elephantSets.find(set => set.id === elephant.setId)?.name}</span>  
+                    </div>  
+                  </div>  
+                </div>  
+              ))}  
+            </div>  
+          </div>  
+        </div>  
+      );  
+    }  
+
+    // QuestTracker-Hauptkomponente  
     function QuestTracker() {  
+      // State für die Punkte und Belohnungen  
       const [totalPoints, setTotalPoints] = React.useState(0);  
+      const [availablePoints, setAvailablePoints] = React.useState(0);  
+      const [showSettings, setShowSettings] = React.useState(false);  
+      const [activeTab, setActiveTab] = React.useState("progress");  
+      const [showRewardCategory, setShowRewardCategory] = React.useState(null);  
+      
+      // Lokaler State für Meilensteine  
       const [userMilestones, setUserMilestones] = React.useState(milestones);  
+      
+      // State für Elefanten und Sets  
+      const [userElephants, setUserElephants] = React.useState(elephants);  
+      const [userElephantSets, setUserElephantSets] = React.useState(elephantSets);  
       
       // Punktestand aktualisieren und Meilensteine überprüfen  
       React.useEffect(() => {  
@@ -31,6 +560,7 @@
           reached: totalPoints >= milestone.points  
         }));  
         setUserMilestones(updatedMilestones);  
+        setAvailablePoints(totalPoints);  
       }, [totalPoints]);  
       
       // Punkte hinzufügen (für Demo)  
@@ -38,53 +568,57 @@
         setTotalPoints(prev => prev + amount);  
       };  
       
+      // Reset (für Demo)  
+      const resetPoints = () => {  
+        setTotalPoints(0);  
+        setAvailablePoints(0);  
+      };  
+      
       return (  
-        <div className="min-h-screen p-4">  
-          <header className="bg-blue-800 p-4 rounded-lg mb-6">  
-            <h1 className="text-2xl font-bold">TARDIS Quest Tracker</h1>  
-          </header>  
+        <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-blue-900 to-indigo-950 text-white font-sans">  
+          {/* Header mit TARDIS-Design */}  
+          <Header showSettings={showSettings} setShowSettings={setShowSettings} />  
           
-          <main>  
-            <div className="mb-6 bg-blue-900 p-4 rounded-lg">  
-              <h2 className="text-xl mb-2">Punktestand: {totalPoints}</h2>  
-              <div className="flex gap-2">  
-                <button   
-                  onClick={() => addPoints(100)}   
-                  className="px-3 py-1 bg-green-600 hover:bg-green-500 rounded"  
-                >  
-                  +100 Punkte  
-                </button>  
-                <button   
-                  onClick={() => setTotalPoints(0)}   
-                  className="px-3 py-1 bg-red-600 hover:bg-red-500 rounded"  
-                >  
-                  Reset  
-                </button>  
-              </div>  
-            </div>  
+          {/* Settings Panel (für Demo) */}  
+          {showSettings && <SettingsPanel addPoints={addPoints} resetPoints={resetPoints} />}  
+          
+          {/* Main Content */}  
+          <main className="container mx-auto px-4 py-6">  
+            {/* Character Sheet / Points */}  
+            <CharacterSheet totalPoints={totalPoints} availablePoints={availablePoints} />  
             
-            <div className="bg-blue-900 p-4 rounded-lg">  
-              <h2 className="text-xl mb-4">Deine Fortschritte</h2>  
-              
-              <div className="space-y-4">  
-                {userMilestones.map(milestone => (  
-                  <div key={milestone.id} className={`p-4 rounded-lg ${milestone.reached ? 'bg-green-800' : 'bg-blue-800'}`}>  
-                    <div className="flex items-center gap-3">  
-                      <div className="text-2xl">{milestone.icon}</div>  
-                      <div>  
-                        <h3 className="font-bold">{milestone.name}</h3>  
-                        <p className="text-sm">{milestone.description}</p>  
-                        <p className="text-sm">{milestone.points} Punkte</p>  
-                      </div>  
-                    </div>  
-                  </div>  
-                ))}  
-              </div>  
-            </div>  
+            {/* Navigation Tabs */}  
+            <NavigationTabs activeTab={activeTab} setActiveTab={setActiveTab} />  
+            
+            {/* Content based on active tab */}  
+            {activeTab === 'progress' && (  
+              <ProgressTab   
+                totalPoints={totalPoints}   
+                userMilestones={userMilestones}  
+              />  
+            )}  
+            
+            {activeTab === 'rewards' && (  
+              <RewardsTab   
+                availablePoints={availablePoints}   
+                showRewardCategory={showRewardCategory}  
+                setShowRewardCategory={setShowRewardCategory}  
+                rewardCategories={rewardCategories}  
+              />  
+            )}  
+            
+            {activeTab === 'elephants' && (  
+              <ElephantCollection   
+                elephants={userElephants}  
+                elephantSets={userElephantSets}  
+              />  
+            )}  
           </main>  
           
-          <footer className="mt-6 text-center text-blue-400">  
+          {/* Footer */}  
+          <footer className="bg-blue-950 border-t border-blue-900 p-4 text-center text-sm text-blue-400">  
             <p>Deine persönliche Schatzsuche • Version 1.0</p>  
+            <p className="mt-1 text-xs">Allons-y! Geronimo!</p>  
           </footer>  
         </div>  
       );  
